@@ -7,7 +7,7 @@ all:
 gen_app_ir:
 	$(CC) app.c -S -emit-llvm -o app.ll -O2
 	
-run:
+run: all
 	./a.out
 
 clean:
