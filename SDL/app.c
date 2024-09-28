@@ -1,5 +1,7 @@
 #include "sim.h"
 
+const int MARGIN = 10;
+
 void drawCircle(const int x, const int y, const int radius, const int color) {
     for (int w = -radius; w <= radius; w++) {
         for (int h = -radius; h <= radius; h++) {
@@ -10,23 +12,29 @@ void drawCircle(const int x, const int y, const int radius, const int color) {
     }
 }
 
-void app() {
-    const int xCenter = SIM_X_SIZE / 2;
-    const int yCenter = SIM_Y_SIZE / 2;
-    
-    int maxR = SIM_Y_SIZE * 2 / 5;
-    if (SIM_X_SIZE < SIM_Y_SIZE) {
-        maxR = SIM_X_SIZE * 2 / 5;
+int getRadius(const int x, const int y) {
+    int maxRadius = x;
+    if (SIM_X_SIZE - x < maxRadius) {
+        maxRadius = SIM_X_SIZE - x;
     }
+    if (y < maxRadius) {
+        maxRadius = y;
+    }
+    if (SIM_Y_SIZE - y < maxRadius) {
+        maxRadius = SIM_Y_SIZE - y;
+    }
+    
+    const int minRadius = 2;
+    return simRand() % (maxRadius - MARGIN + 1) + minRadius;
+}
 
-    const int NUM_CIRCLES = 20;
-    const int radiusDecreaseStep = maxR / NUM_CIRCLES;
-
+void app() {
     while (1) {
-        for (int radius = maxR; radius > 0; radius -= radiusDecreaseStep) {
-            const int color = simRand();
-            drawCircle(xCenter, yCenter, radius, color);
-            simFlush();
-        }
+        const int x = simRand() % (SIM_X_SIZE - MARGIN * 2) + MARGIN;
+        const int y = simRand() % (SIM_Y_SIZE - MARGIN * 2) + MARGIN;
+        const int color = simRand();
+        const int radius = getRadius(x, y);
+        drawCircle(x, y, radius, color);
+        simFlush();
     }
 }
