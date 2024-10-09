@@ -31,8 +31,12 @@ struct TracerPass final : public PassInfoMixin<TracerPass> {
                         continue;
                     }
                     const int NUM_INSN = 3;
-                    Value* args[NUM_INSN];
-                    auto i = 1;
+                    std::vector<Value*>args{};
+
+                    builder.SetInsertPoint(&I);
+                    Value* opcodeName = builder.CreateGlobalStringPtr(I.getOpcodeName());
+                    args.push_back(opcodeName);
+
                     for (auto&& use: I.uses()) {
                         Instruction* pUseInstr = dyn_cast<Instruction>(use);
                         if (pUseInstr == nullptr) {
@@ -40,13 +44,14 @@ struct TracerPass final : public PassInfoMixin<TracerPass> {
                         }
                         builder.SetInsertPoint(pUseInstr);
                         Value* useOpcodeName = builder.CreateGlobalStringPtr(pUseInstr->getOpcodeName());
-                        args[i] = useOpcodeName;
-                        if (++i == NUM_INSN) {
+                        args.push_back(useOpcodeName);
+                        if (args.size() == NUM_INSN) {
                             break;
                         }
                     }
-                    builder.SetInsertPoint(&I);
-                    args[0] = builder.CreateGlobalStringPtr(I.getOpcodeName());
+                    while (args.size() != NUM_INSN) {
+                        args.push_back(ConstantPointerNull::get(builder.getInt8Ty()->getPointerTo()));
+                    }
                     builder.CreateCall(logFunc, ArrayRef<Value*>{args});
                 }
             }
