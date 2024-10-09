@@ -6,37 +6,29 @@ project(${PROJECT_NAME} LANGUAGES CXX C)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
-set(CMAKE_CXX_COMPILER clang++)
-set(CMAKE_C_COMPILER clang)
+set(CMAKE_CXX_COMPILER clang++-18)
+set(CMAKE_C_COMPILER clang-18)
 
-find_package(LLVM REQUIRED)
-if(NOT LLVM_FOUND)
-  return()
-endif()
+find_package(LLVM 18.1.8 REQUIRED)
+find_package(SDL2 REQUIRED)
 
-include_directories(${LLVM_INCLUDE_DIR})
+set(PASS_SOURCE_DIR ${PROJECT_SOURCE_DIR}/src)
+set(APP_SOURCE_DIR ${CMAKE_SOURCE_DIR}/../SDL/src)
 
-add_compile_options(-fPIC)
-add_library(log_pass SHARED ./src/log_pass.cpp)
+add_library(log_pass SHARED ${PASS_SOURCE_DIR}/tracer_pass.cpp)
+target_include_directories(log_pass PRIVATE ${LLVM_INCLUDE_DIRS})
 
-# set(CALLBACKS ${CMAKE_CURRENT_SOURCE_DIR}/Callbacks.cpp)
-# add_custom_target(Callbacks ALL
-#   COMMAND clang++ -std=c++20 -O2 ${CALLBACKS} -fPIC -c -o Callbacks.o
-#   COMMENT "Generating callbacks" VERBATIM
-#                   )
+add_library(app OBJECT ${APP_SOURCE_DIR}/app.c)
+target_include_directories(app PRIVATE ${APP_INCLUDE_DIR})
+target_compile_options(app PRIVATE -fPIC -O2 -fpass-plugin=./liblog_pass.so)
+add_dependencies(app log_pass)
 
-set(APP_SOURCES_DIR ${CMAKE_SOURCE_DIR}/../SDL/src)
-set(SOURCES 
-        ./src/log.cpp
-        ${APP_SOURCES_DIR}/app.c
-        ${APP_SOURCES_DIR}/start.c
-    )
-
-include_directories(${APP_SOURCES_DIR})
-add_library(sim STATIC ${APP_SOURCES_DIR}/sim.c)
-target_link_options(sim PUBLIC -lSDL2)
-
-add_compile_options(-O2 -fpass-plugin=./liblog_pass.so) 
-add_executable(app_log ${SOURCES})
-target_link_libraries(app_log PUBLIC sim)
-add_dependencies(app_log log_pass sim)
+add_executable(app_trace
+    ${PASS_SOURCE_DIR}/tracer.cpp
+    ${APP_SOURCE_DIR}/start.c
+    ${APP_SOURCE_DIR}/sim.c
+    $<TARGET_OBJECTS:app>)
+target_include_directories(app_trace PRIVATE
+    ${APP_INCLUDE_DIR}
+    ${LLVM_INCLUDE_DIRS})
+target_link_libraries(app_trace PRIVATE SDL2 m LLVM)
