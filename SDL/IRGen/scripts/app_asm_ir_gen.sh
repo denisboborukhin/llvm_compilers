@@ -1,0 +1,1 @@
+clang++-18 $(llvm-config --cppflags --ldflags --libs) -I../src ../src/sim.c ../IRGen/app_asm_ir_gen.cpp -lSDL2 -o app_asm_ir_gen

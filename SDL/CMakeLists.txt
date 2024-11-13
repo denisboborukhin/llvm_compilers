@@ -36,7 +36,7 @@ find_package(LLVM 18.1.8 REQUIRED)
 set(APP_IR_SOURCES_DIR ${CMAKE_CURRENT_SOURCE_DIR}/IRGen)
 
 add_custom_target(gen_app_ir
-    COMMAND ${APP_IR_SOURCES_DIR}/app_ir_gen.sh
+    COMMAND ${APP_IR_SOURCES_DIR}/scripts/app_ir_gen.sh
 )
 
 #### Attempts to invoke assembly via CMake
@@ -65,3 +65,7 @@ add_custom_target(gen_app_ir
 #     ${APP_SOURCES_DIR}
 #     ${LLVM_INCLUDE_DIRS})
 # target_link_libraries(app_ir_gen PRIVATE SDL2 LLVM)
+
+add_custom_target(gen_asm_app_ir
+    COMMAND ${APP_IR_SOURCES_DIR}/scripts/app_asm_ir_gen.sh
+)
